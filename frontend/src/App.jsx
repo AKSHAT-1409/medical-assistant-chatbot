@@ -1,12 +1,20 @@
 import React, { useState, useEffect } from 'react'
 import Chat from './components/Chat.jsx'
+import Auth from './components/Auth.jsx'
 
 function App() {
+  // --- STATE FROM BOTH COMPONENTS ---
+  // From Auth App: Handles authentication status
+  const [token, setToken] = useState(localStorage.getItem('token'))
+  
+  // From MediCore AI App: Handles UI state
   const [isLoading, setIsLoading] = useState(true)
   const [darkMode, setDarkMode] = useState(false)
   const [tagline, setTagline] = useState("")
   const [currentFeature, setCurrentFeature] = useState(0)
 
+
+  // --- FEATURES FROM MEDI-CORE AI ---
   const features = [
     { icon: "🩺", title: "Symptom Analysis", desc: "AI-powered symptom checker" },
     { icon: "💊", title: "Medication Guide", desc: "Drug information & interactions" },
@@ -14,35 +22,69 @@ function App() {
     { icon: "📋", title: "Medical Records", desc: "Organize your health data" }
   ]
 
+
+  // --- FUNCTIONS FROM AUTH APP ---
+  const onAuthenticated = () => {
+    setToken(localStorage.getItem('token'))
+    setIsLoading(true); // Reset loading screen for new login
+  }
+
+  const logout = () => {
+    localStorage.removeItem('token')
+    localStorage.removeItem('username')
+    setToken(null)
+  }
+
+
+  // --- USE-EFFECT HOOKS FROM MEDI-CORE AI ---
+  // Loading screen timer (now runs after authentication)
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsLoading(false)
-    }, 2000)
-    return () => clearTimeout(timer)
-  }, [])
+    if (token) {
+      const timer = setTimeout(() => {
+        setIsLoading(false)
+      }, 2000)
+      return () => clearTimeout(timer)
+    }
+  }, [token])
 
   // Typing effect for tagline
   useEffect(() => {
-    const fullText = "Advanced AI Healthcare Assistant - Your Health, Our Priority"
-    let i = 0
-    const typingInterval = setInterval(() => {
-      setTagline(fullText.slice(0, i + 1))
-      i++
-      if (i === fullText.length) clearInterval(typingInterval)
-    }, 80)
-    return () => clearInterval(typingInterval)
-  }, [])
+    if (!isLoading && token) {
+      const fullText = "Advanced AI Healthcare Assistant - Your Health, Our Priority"
+      let i = 0
+      const typingInterval = setInterval(() => {
+        setTagline(fullText.slice(0, i + 1))
+        i++
+        if (i === fullText.length) clearInterval(typingInterval)
+      }, 80)
+      return () => clearInterval(typingInterval)
+    }
+  }, [isLoading, token])
 
   // Cycle through features
   useEffect(() => {
-    const featureInterval = setInterval(() => {
-      setCurrentFeature(prev => (prev + 1) % features.length)
-    }, 3000)
-    return () => clearInterval(featureInterval)
-  }, [])
+    if (!isLoading && token) {
+      const featureInterval = setInterval(() => {
+        setCurrentFeature(prev => (prev + 1) % features.length)
+      }, 3000)
+      return () => clearInterval(featureInterval)
+    }
+  }, [isLoading, token, features.length])
 
+
+  // --- THEME TOGGLE FUNCTION FROM MEDI-CORE AI ---
   const toggleTheme = () => setDarkMode(!darkMode)
 
+
+  // --- PRIMARY RENDER LOGIC ---
+
+  // 1. If not authenticated, show the Auth component
+  if (!token) {
+    // Note: You might want to style your Auth component to match the theme
+    return <Auth onAuthenticated={onAuthenticated} />
+  }
+
+  // 2. If authenticated, but loading, show the loading screen
   if (isLoading) {
     return (
       <div className={`${darkMode ? "bg-gradient-to-br from-gray-900 via-purple-900 to-gray-900" : "bg-gradient-to-br from-blue-50 via-indigo-100 to-purple-100"} min-h-screen flex items-center justify-center relative overflow-hidden`}>
@@ -93,6 +135,7 @@ function App() {
     )
   }
 
+  // 3. If authenticated and loaded, show the full MediCore AI application
   return (
     <div className={`${darkMode ? "bg-gradient-to-br from-gray-900 via-blue-900 to-purple-900" : "bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50"} min-h-screen transition-all duration-700 relative overflow-hidden`}>
       
@@ -105,7 +148,7 @@ function App() {
 
       <div className="container mx-auto px-4 py-8 relative z-10">
 
-        {/* Header with navigation */}
+        {/* Header with MERGED navigation and user info */}
         <header className="flex justify-between items-center mb-12">
           <div className="flex items-center space-x-4">
             <div className={`w-12 h-12 ${darkMode ? "bg-gradient-to-r from-blue-500 to-purple-500" : "bg-gradient-to-r from-blue-600 to-indigo-600"} rounded-xl flex items-center justify-center text-white text-2xl font-bold animate-bounce-gentle`}>
@@ -121,11 +164,20 @@ function App() {
             <div className={`px-4 py-2 rounded-full ${darkMode ? "bg-green-500/20 text-green-400" : "bg-green-100 text-green-700"} text-sm font-medium animate-pulse`}>
               🟢 AI Online
             </div>
+            <span className={`text-sm font-medium hidden sm:block ${darkMode ? "text-gray-300" : "text-gray-600"}`}>
+              {localStorage.getItem('username')}
+            </span>
+            <button
+              onClick={logout}
+              className={`px-3 py-2 rounded-xl shadow-md transition-all transform hover:scale-105 hover:shadow-lg ${darkMode ? "bg-red-500/80 text-white" : "bg-red-500 text-white"} font-medium text-sm`}
+            >
+              Logout
+            </button>
             <button
               onClick={toggleTheme}
-              className={`px-6 py-3 rounded-xl shadow-lg transition-all transform hover:scale-105 hover:shadow-xl ${darkMode ? "bg-gradient-to-r from-yellow-400 to-orange-400 text-gray-900" : "bg-gradient-to-r from-gray-800 to-gray-900 text-white"} font-medium`}
+              className={`px-4 py-2 rounded-xl shadow-lg transition-all transform hover:scale-105 hover:shadow-xl ${darkMode ? "bg-gradient-to-r from-yellow-400 to-orange-400 text-gray-900" : "bg-gradient-to-r from-gray-800 to-gray-900 text-white"} font-medium text-sm`}
             >
-              {darkMode ? "☀️ Light Mode" : "🌙 Dark Mode"}
+              {darkMode ? "☀️" : "🌙"}
             </button>
           </div>
         </header>

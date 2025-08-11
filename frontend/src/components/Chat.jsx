@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react'
-import axios from 'axios'
+import api from '../api'
 
 const Chat = () => {
   const [messages, setMessages] = useState([]);
@@ -12,25 +12,20 @@ const Chat = () => {
 
   // Function to clean and format AI response
   const formatAIResponse = (text) => {
-    // Remove markdown ** symbols and convert to proper formatting
     let cleanedText = text
-      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') // Convert **text** to <strong>text</strong>
-      .replace(/\*(.*?)\*/g, '<em>$1</em>') // Convert *text* to <em>text</em>
-      .replace(/`(.*?)`/g, '<code>$1</code>') // Convert `text` to <code>text</code>
-      .replace(/\n/g, '<br>'); // Convert newlines to <br> tags
-    
+      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+      .replace(/\*(.*?)\*/g, '<em>$1</em>')
+      .replace(/`(.*?)`/g, '<code>$1</code>')
+      .replace(/\n/g, '<br>');
     return cleanedText;
   };
 
-  // Function to render formatted text
   const renderFormattedText = (text) => {
     const formattedText = formatAIResponse(text);
     return <div dangerouslySetInnerHTML={{ __html: formattedText }} />;
   };
 
-  // Hardcoded session ID for MVP
-  const SESSION_ID = "user123"
-  const API_BASE_URL = "http://localhost:8000"
+  const SESSION_ID = 'user123'
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
@@ -40,35 +35,46 @@ const Chat = () => {
     scrollToBottom()
   }, [messages])
 
-  // Load chat history when component mounts
   useEffect(() => {
     loadChatHistory();
   }, []);
 
+  const handleAuthError = (err) => {
+    if (err?.response?.status === 401) {
+      localStorage.removeItem('token')
+      localStorage.removeItem('username')
+      window.location.reload()
+      return true
+    }
+    return false
+  }
+
   const loadChatHistory = async () => {
     try {
-      const response = await axios.get(`${API_BASE_URL}/history/${SESSION_ID}`);
+      const response = await api.get(`/history/${SESSION_ID}`);
       setChatHistory(response.data);
       setMessages(response.data);
-      
-      // Get session info
-      const sessionsResponse = await axios.get(`${API_BASE_URL}/sessions`);
+      const sessionsResponse = await api.get(`/sessions`);
       const currentSession = sessionsResponse.data.sessions.find(s => s.session_id === SESSION_ID);
       setSessionInfo(currentSession);
     } catch (error) {
-      console.error('Error loading chat history:', error);
+      if (!handleAuthError(error)) {
+        console.error('Error loading chat history:', error);
+      }
     }
   };
 
   const clearChatHistory = async () => {
     if (window.confirm('Are you sure you want to clear all chat history?')) {
       try {
-        await axios.delete(`${API_BASE_URL}/sessions/${SESSION_ID}`);
+        await api.delete(`/sessions/${SESSION_ID}`);
         setMessages([]);
         setChatHistory([]);
         setSessionInfo(null);
       } catch (error) {
-        console.error('Error clearing chat history:', error);
+        if (!handleAuthError(error)) {
+          console.error('Error clearing chat history:', error);
+        }
       }
     }
   };
@@ -87,7 +93,7 @@ const Chat = () => {
     setIsLoading(true);
 
     try {
-      const response = await axios.post(`${API_BASE_URL}/send`, {
+      const response = await api.post(`/send`, {
         message: inputMessage,
         session_id: SESSION_ID
       });
@@ -101,24 +107,19 @@ const Chat = () => {
       setMessages(prev => [...prev, aiMessage]);
       setChatHistory(response.data.history);
     } catch (error) {
-      console.error('Error sending message:', error);
-      const errorMessage = {
-        role: 'assistant',
-        content: 'Sorry, I encountered an error. Please try again.',
-        timestamp: new Date().toISOString()
-      };
-      setMessages(prev => [...prev, errorMessage]);
+      if (!handleAuthError(error)) {
+        console.error('Error sending message:', error);
+        const errorMessage = {
+          role: 'assistant',
+          content: 'Sorry, I encountered an error. Please try again.',
+          timestamp: new Date().toISOString()
+        };
+        setMessages(prev => [...prev, errorMessage]);
+      }
     } finally {
       setIsLoading(false);
     }
   };
-
-  const formatTimestamp = (timestamp) => {
-    return new Date(timestamp).toLocaleTimeString([], { 
-      hour: '2-digit', 
-      minute: '2-digit' 
-    })
-  }
 
   return (
     <div className="flex flex-col h-screen bg-gray-50">
@@ -128,39 +129,18 @@ const Chat = () => {
         <p className="text-center text-blue-100 mt-2">
           Get general health information and guidance
         </p>
-        
-        {/* Session Info */}
         {sessionInfo && (
           <div className="mt-3 text-center text-blue-100">
-            <span className="text-sm">
-              💬 {sessionInfo.message_count} messages • 
-              Session: {SESSION_ID}
-            </span>
-            <button
-              onClick={clearChatHistory}
-              className="ml-3 text-xs bg-red-500 hover:bg-red-600 px-2 py-1 rounded"
-            >
-              Clear History
-            </button>
+            <span className="text-sm">💬 {sessionInfo.message_count} messages • Session: {SESSION_ID}</span>
+            <button onClick={clearChatHistory} className="ml-3 text-xs bg-red-500 hover:bg-red-600 px-2 py-1 rounded">Clear History</button>
           </div>
         )}
       </div>
 
       {/* Disclaimer */}
       <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 mx-4 mt-4 rounded">
-        <div className="flex">
-          <div className="flex-shrink-0">
-            <svg className="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
-              <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-            </svg>
-          </div>
-          <div className="ml-3">
-            <p className="text-sm text-yellow-800">
-              <strong>Important:</strong> This chatbot provides general health information only. 
-              It is not a substitute for professional medical advice. Always consult healthcare 
-              professionals for medical concerns.
-            </p>
-          </div>
+        <div className="ml-3 text-sm text-yellow-800">
+          <strong>Important:</strong> General health information only. Not a substitute for professional advice.
         </div>
       </div>
 
@@ -170,37 +150,26 @@ const Chat = () => {
           <div className="text-center text-gray-500 py-8">
             <div className="text-4xl mb-4">💬</div>
             <p className="text-lg font-medium mb-2">Start a conversation</p>
-            <p className="text-sm">Ask me about health topics, symptoms, or wellness advice.</p>
-            <p className="text-xs mt-2 text-blue-600">Your conversations will be saved automatically!</p>
+            <p className="text-sm">Ask about health topics, symptoms, or wellness advice.</p>
+            <p className="text-xs mt-2 text-blue-600">Your conversations are saved to your account.</p>
           </div>
         ) : (
           messages.map((message, index) => (
-            <div
-              key={index}
-              className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
-            >
-              <div
-                className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
-                  message.role === 'user'
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-white text-gray-800 shadow-md'
-                }`}
-              >
+            <div key={index} className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+              <div className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${message.role === 'user' ? 'bg-blue-600 text-white' : 'bg-white text-gray-800 shadow-md'}`}>
                 {message.role === 'assistant' ? (
                   renderFormattedText(message.content)
                 ) : (
                   <p>{message.content}</p>
                 )}
-                <p className={`text-xs mt-2 ${
-                  message.role === 'user' ? 'text-blue-100' : 'text-gray-500'
-                }`}>
+                <p className={`text-xs mt-2 ${message.role === 'user' ? 'text-blue-100' : 'text-gray-500'}`}>
                   {new Date(message.timestamp).toLocaleTimeString()}
                 </p>
               </div>
             </div>
           ))
         )}
-        
+
         {isLoading && (
           <div className="flex justify-start">
             <div className="bg-white text-gray-800 shadow-md px-4 py-2 rounded-lg">
@@ -211,6 +180,8 @@ const Chat = () => {
             </div>
           </div>
         )}
+
+        <div ref={messagesEndRef} />
       </div>
 
       {/* Input Area */}
@@ -221,7 +192,7 @@ const Chat = () => {
             value={inputMessage}
             onChange={(e) => setInputMessage(e.target.value)}
             onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
-            placeholder="Ask me about health topics..."
+            placeholder="Ask about health topics..."
             className="flex-1 border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             disabled={isLoading}
           />
@@ -233,15 +204,12 @@ const Chat = () => {
             Send
           </button>
         </div>
-        
-        {/* Chat History Status */}
         <div className="mt-2 text-xs text-center text-gray-500">
-          💾 Chat history is automatically saved • 
-          {sessionInfo ? ` ${sessionInfo.message_count} messages stored` : ' Starting fresh conversation'}
+          💾 History auto-saved to your account
         </div>
       </div>
     </div>
-  );
-};
+  )
+}
 
 export default Chat

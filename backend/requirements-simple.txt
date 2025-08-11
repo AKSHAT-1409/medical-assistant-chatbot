@@ -7,7 +7,7 @@ langchain-google-genai
 pydantic
 python-dotenv
 requests
-
+PyJWT>=2.8.0
 
 
 
