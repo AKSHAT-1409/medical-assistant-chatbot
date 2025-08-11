@@ -1,0 +1,24 @@
+{
+  "user123": [
+    {
+      "role": "user",
+      "content": "hi sympotom of heart attac",
+      "timestamp": "2025-08-11T06:43:34.584815Z"
+    },
+    {
+      "role": "assistant",
+      "content": "Hi there.  I understand you're looking for information on heart attack symptoms.  It's important to remember that I am not a doctor and cannot diagnose medical conditions.  This information is for general knowledge only.\n\nSome common symptoms of a heart attack can include:\n\n* Chest pain or discomfort: This can feel like pressure, squeezing, fullness, or pain.\n* Shortness of breath:  Difficulty breathing can occur with or without chest pain.\n* Pain in other areas:  Pain can radiate to the jaw, neck, back, or arms.\n* Other symptoms:  Sweating, nausea, lightheadedness, or sudden dizziness.\n\nIt's crucial to understand that these symptoms can vary from person to person, and some people may experience a heart attack with minimal or no chest pain.  Women, in particular, may experience different symptoms.\n\nWARNING:  If you are experiencing any of these symptoms, or any other concerning symptoms,  SEEK IMMEDIATE MEDICAL ATTENTION.  Do not delay.  Call emergency services or go to the nearest hospital immediately.  A heart attack is a serious medical emergency.\n\n\nThis information is not a substitute for professional medical advice.  Always consult a doctor or other qualified healthcare professional for any health concerns or before making any decisions related to your health or treatment.",
+      "timestamp": "2025-08-11T06:43:36.949153Z"
+    },
+    {
+      "role": "user",
+      "content": "symptoms of stomach ulcer",
+      "timestamp": "2025-08-11T08:28:22.755527Z"
+    },
+    {
+      "role": "assistant",
+      "content": "Symptoms of a stomach ulcer can vary, and some people may not experience any symptoms at all.  It's important to remember that I am not a doctor and cannot diagnose medical conditions.  This information is for general knowledge only.\n\nCommon symptoms can include:\n\nBurning stomach pain: This is often felt in the upper abdomen and may be worse when your stomach is empty or at night.\nFeeling full quickly after eating: You might feel uncomfortably full even after eating a small amount of food.\nHeartburn or indigestion:  These are common digestive issues, but can be associated with ulcers.\nNausea or vomiting: You may feel nauseous or vomit, sometimes with blood.\nBloating or gas: You may experience more bloating or gas than usual.\nLoss of appetite:  You might find you don't have the same appetite as before.\nUnexplained weight loss:  Significant weight loss without trying could be a symptom.\nDark or bloody stools: This is a serious symptom and requires immediate medical attention.\nVomiting blood or material that looks like coffee grounds: This is also a very serious symptom and requires immediate medical attention.\n\nWARNING: If you experience any of these symptoms, particularly dark or bloody stools or vomiting blood, seek immediate medical attention.  These could indicate serious complications.\n\nThis information is not a substitute for professional medical advice.  Always consult a doctor or other qualified healthcare professional if you are experiencing any concerning symptoms or have any questions about your health.  Do not attempt to self-diagnose or self-treat.",
+      "timestamp": "2025-08-11T08:28:25.756670Z"
+    }
+  ]
+}
